@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -112,9 +113,12 @@ class MainActivity : AppCompatActivity() {
                 speak("${apps.size} apps mile.")
             }
             "open", "launch" -> openApp(arg)
+            "exit", "home" -> exitToOtherLauncher()
+            "switch" -> openSettings(Settings.ACTION_HOME_SETTINGS, "Default home app")
+            "settings" -> openSettings(Settings.ACTION_SETTINGS, "Settings")
             "clear" -> out.text = ""
             "date" -> add(DateFormat.getDateTimeInstance().format(Date()))
-            "help" -> add("ls            apps ki list\nopen <app>    app kholo\nclear         screen saaf\ndate          samay", dim)
+            "help" -> add("ls            apps ki list\nopen <app>    app kholo\nexit          dusre launcher par jao\nswitch        default launcher badlo\nsettings      phone settings\nclear         screen saaf\ndate          samay", dim)
             else -> add("$cmd: command not found", red)
         }
     }
@@ -131,5 +135,29 @@ class MainActivity : AppCompatActivity() {
         add("Opening ${a.name}...", amber)
         speak("${a.name} khol raha hoon.")
         handler.postDelayed({ startActivity(li) }, 700)
+    }
+
+    private fun exitToOtherLauncher() {
+        val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        val other = packageManager.queryIntentActivities(i, 0)
+            .firstOrNull { it.activityInfo.packageName != packageName }
+        if (other == null) { add("exit: dusra launcher nahi mila. 'switch' try karo.", red); return }
+        val label = other.loadLabel(packageManager).toString()
+        add("Exiting to $label...", amber)
+        speak("Bye bhai!")
+        val go = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+            .setClassName(other.activityInfo.packageName, other.activityInfo.name)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        handler.postDelayed({ startActivity(go) }, 700)
+    }
+
+    private fun openSettings(action: String, name: String) {
+        add("Opening $name...", amber)
+        try {
+            startActivity(Intent(action))
+        } catch (e: Exception) {
+            try { startActivity(Intent(Settings.ACTION_SETTINGS)) }
+            catch (e2: Exception) { add("settings khul nahi payi.", red) }
+        }
     }
 }

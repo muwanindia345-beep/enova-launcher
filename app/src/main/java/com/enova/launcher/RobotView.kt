@@ -34,9 +34,9 @@ class RobotView @JvmOverloads constructor(c: Context, a: AttributeSet? = null) :
         if (now > nextBlink) { blinkUntil = now + 140; nextBlink = now + 3000 + Random.nextLong(2500) }
         lookX += (tx - lookX) * 0.1f
         lookY += (ty - lookY) * 0.1f
-        val s = minOf(width / 200f, height / 190f)
+        val s = minOf(width / 200f, height / 205f)
         canvas.save()
-        canvas.translate((width - 200 * s) / 2f, (height - 190 * s) / 2f + (sin(now / 550.0) * 4 * s).toFloat())
+        canvas.translate((width - 200 * s) / 2f, (height - 205 * s) / 2f + 12 * s + (sin(now / 550.0) * 4 * s).toFloat())
         canvas.scale(s, s)
         fill.color = green
         canvas.drawRect(98f, 12f, 102f, 34f, fill)

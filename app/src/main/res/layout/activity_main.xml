@@ -1,64 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#020A04"
-    android:fitsSystemWindows="true"
-    android:orientation="vertical">
+    android:background="#020A04">
 
-    <TextView
+    <com.enova.launcher.MatrixRainView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="10dp"
-        android:text="Enova Launcher v1.1"
-        android:textColor="#00FF41"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:typeface="monospace" />
+        android:layout_height="match_parent" />
 
-    <com.enova.launcher.RobotView
-        android:id="@+id/robot"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="190dp" />
-
-    <TextView
-        android:id="@+id/say"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:minHeight="28dp"
-        android:padding="4dp"
-        android:textColor="#FFB454"
-        android:typeface="monospace" />
-
-    <ScrollView
-        android:id="@+id/scroll"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        android:orientation="vertical">
 
         <TextView
-            android:id="@+id/out"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:textColor="#B9F5C8"
-            android:textSize="14sp"
+            android:gravity="center"
+            android:paddingTop="10dp"
+            android:text="Enova Launcher v1.1"
+            android:textColor="#00FF41"
+            android:textSize="18sp"
+            android:textStyle="bold"
             android:typeface="monospace" />
-    </ScrollView>
 
-    <EditText
-        android:id="@+id/input"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#04120A"
-        android:hint="enova@home:~$ ls"
-        android:imeOptions="actionSend"
-        android:inputType="text|textNoSuggestions"
-        android:maxLines="1"
-        android:padding="14dp"
-        android:textColor="#B9F5C8"
-        android:textColorHint="#4F7A5B"
-        android:typeface="monospace" />
-</LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="4dp"
+            android:text="enova@device"
+            android:textColor="#4F7A5B"
+            android:textSize="12sp"
+            android:typeface="monospace" />
+
+        <com.enova.launcher.RobotView
+            android:id="@+id/robot"
+            android:layout_width="match_parent"
+            android:layout_height="190dp" />
+
+        <TextView
+            android:id="@+id/say"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:minHeight="28dp"
+            android:padding="4dp"
+            android:textColor="#FFB454"
+            android:typeface="monospace" />
+
+        <ScrollView
+            android:id="@+id/scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#BF020A04">
+
+            <TextView
+                android:id="@+id/out"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:textColor="#B9F5C8"
+                android:textSize="14sp"
+                android:typeface="monospace" />
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#04120A"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="enova@home:~$"
+                android:textColor="#00FF41"
+                android:textSize="14sp"
+                android:typeface="monospace" />
+
+            <EditText
+                android:id="@+id/input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="ls / open WhatsApp"
+                android:imeOptions="actionSend"
+                android:inputType="text|textNoSuggestions"
+                android:maxLines="1"
+                android:paddingStart="8dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp"
+                android:textColor="#B9F5C8"
+                android:textColorHint="#4F7A5B"
+                android:textSize="14sp"
+                android:typeface="monospace" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

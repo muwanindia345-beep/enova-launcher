@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:paddingTop="10dp"
-            android:text="Enova Launcher v1.3"
+            android:text="Enova Launcher v1.4"
             android:textColor="#00FF41"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -55,52 +55,59 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="#BF020A04">
+            android:background="#BF020A04"
+            android:fillViewport="true">
 
-            <TextView
-                android:id="@+id/out"
+            <LinearLayout
+                android:id="@+id/content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:textColor="#B9F5C8"
-                android:textSize="14sp"
-                android:typeface="monospace" />
+                android:clickable="true"
+                android:focusable="false"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/out"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#B9F5C8"
+                    android:textSize="14sp"
+                    android:typeface="monospace" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="enova@home:~$"
+                        android:textColor="#00FF41"
+                        android:textSize="14sp"
+                        android:typeface="monospace" />
+
+                    <EditText
+                        android:id="@+id/input"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="open WhatsApp"
+                        android:imeOptions="actionSend"
+                        android:inputType="text|textNoSuggestions"
+                        android:maxLines="1"
+                        android:paddingStart="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        android:textColor="#B9F5C8"
+                        android:textColorHint="#4F7A5B"
+                        android:textSize="14sp"
+                        android:typeface="monospace" />
+                </LinearLayout>
+            </LinearLayout>
         </ScrollView>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#04120A"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="14dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="enova@home:~$"
-                android:textColor="#00FF41"
-                android:textSize="14sp"
-                android:typeface="monospace" />
-
-            <EditText
-                android:id="@+id/input"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@null"
-                android:hint="ls / open WhatsApp"
-                android:imeOptions="actionSend"
-                android:inputType="text|textNoSuggestions"
-                android:maxLines="1"
-                android:paddingStart="8dp"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp"
-                android:textColor="#B9F5C8"
-                android:textColorHint="#4F7A5B"
-                android:textSize="14sp"
-                android:typeface="monospace" />
-        </LinearLayout>
     </LinearLayout>
 </FrameLayout>

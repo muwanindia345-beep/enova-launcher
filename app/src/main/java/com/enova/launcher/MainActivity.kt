@@ -10,7 +10,9 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.view.KeyEvent
+import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
@@ -46,6 +48,13 @@ class MainActivity : AppCompatActivity() {
         input = findViewById(R.id.input)
         add("Enova Launcher v1.1 ready. 'ls' likho, phir 'open WhatsApp'.", dim)
         speak("Namaste! Main Enova hoon.")
+        val tap = View.OnClickListener { focusInput() }
+        scroll.setOnClickListener(tap)
+        out.setOnClickListener(tap)
+        findViewById<View>(R.id.content).setOnClickListener(tap)
+        input.setOnFocusChangeListener { _, f ->
+            if (f) scroll.postDelayed({ scroll.fullScroll(ScrollView.FOCUS_DOWN) }, 300)
+        }
         input.setOnEditorActionListener { _, id, ev ->
             val enter = ev != null && ev.keyCode == KeyEvent.KEYCODE_ENTER && ev.action == KeyEvent.ACTION_DOWN
             if (id == EditorInfo.IME_ACTION_SEND || enter) {
@@ -64,6 +73,13 @@ class MainActivity : AppCompatActivity() {
     // Home dabane par launcher hi rahe, back se band na ho
     @Deprecated("Launcher ignores back")
     override fun onBackPressed() {}
+
+    // Terminal par kahin bhi tap karo to keyboard khul jaye
+    private fun focusInput() {
+        input.requestFocus()
+        getSystemService(InputMethodManager::class.java)?.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
+        scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
+    }
 
     private fun loadApps() {
         val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)

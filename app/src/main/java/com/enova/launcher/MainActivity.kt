@@ -125,6 +125,12 @@ class MainActivity : AppCompatActivity() {
         val v = raw.trim()
         add("enova@home:${pathLabel()}$ $v", green)
         if (v.isEmpty()) return
+        val act = pending
+        if (act != null) {
+            pending = null
+            if (v.lowercase() == "y" || v.lowercase() == "yes") act() else add("cancelled", dim)
+            return
+        }
         val parts = v.split(Regex("\\s+"), 2)
         val cmd = parts[0].lowercase()
         val rest = parts.getOrNull(1)?.trim() ?: ""         // original case (for file names)
@@ -146,9 +152,13 @@ class MainActivity : AppCompatActivity() {
             "cwd", "pwd" -> add(pathLabel())
             "dir", "ll" -> dirCmd()
             "cp" -> cpCmd(args)
+            "mv" -> mvCmd(args)
+            "cat" -> catCmd(args)
+            "touch" -> touchCmd(args)
+            "rm" -> rmCmd(args)
             "clear" -> out.text = ""
             "date" -> add(DateFormat.getDateTimeInstance().format(Date()))
-            "help" -> add("ls            list apps\nopen <app>    open an app\nos            open EnovaOS\nexit          go to another launcher\nswitch        change default launcher\nsettings      phone settings\nmkdir <name>  create folder\ncd <folder>   enter folder (cd ~ = home)\ncwd           show current folder\ndir           list files in folder\ncp <src> <dst> copy file/folder\nclear         clear screen\ndate          show date and time", dim)
+            "help" -> add("ls            list apps\nopen <app>    open an app\nos            open EnovaOS\nexit          go to another launcher\nswitch        change default launcher\nsettings      phone settings\nmkdir <name>  create folder\ncd <folder>   enter folder (cd ~ = home)\ncwd           show current folder\ndir           list files in folder\ncp <src> <dst> copy file/folder\nmv <src> <dst>  move or rename\ncat <file>    show file text\ntouch <file>  create empty file\nrm <file>     delete file\nrm -rf <dir>  delete folder\nclear         clear screen\ndate          show date and time", dim)
             else -> add("$cmd: command not found", red)
         }
     }
@@ -221,6 +231,101 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             add("cp: failed (${e.message})", red)
         }
+    }
+
+    // ---------- cat / rm / touch / mv ----------
+
+    private var pending: (() -> Unit)? = null
+
+    private fun catCmd(names: List<String>) {
+        if (names.isEmpty()) { add("cat: usage: cat <file>", red); return }
+        for (n in names) {
+            val f = resolve(n)
+            when {
+                f == null -> add("cat: '$n': outside ~ not allowed", red)
+                !f.exists() -> add("cat: '$n': no such file", red)
+                f.isDirectory -> add("cat: '$n': is a folder", red)
+                f.length() > 65536 -> add("cat: '$n': file too large (max 64 KB)", red)
+                else -> try {
+                    val b = f.readBytes()
+                    if (b.take(512).any { it.toInt() == 0 }) add("cat: '$n': binary file", red)
+                    else add(String(b, Charsets.UTF_8).trimEnd('\n'))
+                } catch (e: Exception) {
+                    add("cat: '$n': cannot read (${e.message})", red)
+                }
+            }
+        }
+    }
+
+    private fun touchCmd(names: List<String>) {
+        if (names.isEmpty()) { add("touch: usage: touch <file>", red); return }
+        for (n in names) {
+            val f = resolve(n)
+            when {
+                f == null -> add("touch: '$n': outside ~ not allowed", red)
+                f.exists() -> f.setLastModified(System.currentTimeMillis())
+                f.parentFile?.isDirectory != true -> add("touch: '$n': folder does not exist", red)
+                else -> try {
+                    f.createNewFile()
+                    add("created $n", dim)
+                } catch (e: Exception) {
+                    add("touch: '$n': failed (${e.message})", red)
+                }
+            }
+        }
+    }
+
+    private fun rmCmd(a: List<String>) {
+        val rec = a.any { it.startsWith("-") && (it.contains('r') || it.contains('R')) }
+        val names = a.filter { !it.startsWith("-") }
+        if (names.isEmpty()) { add("rm: usage: rm <file> | rm -rf <folder>", red); return }
+        val targets = mutableListOf<File>()
+        for (n in names) {
+            val f = resolve(n)
+            when {
+                f == null -> add("rm: '$n': outside ~ not allowed", red)
+                f == root -> add("rm: cannot delete home (~)", red)
+                !f.exists() -> add("rm: '$n': no such file or folder", red)
+                f.isDirectory && !rec -> add("rm: '$n': is a folder (use rm -rf $n)", red)
+                else -> targets.add(f)
+            }
+        }
+        if (targets.isEmpty()) return
+        if (targets.any { it.isDirectory }) {
+            add("Delete ${targets.joinToString(", ") { it.name }} and everything inside? (y/n)", amber)
+            pending = { targets.forEach { rmDo(it) } }
+        } else {
+            targets.forEach { rmDo(it) }
+        }
+    }
+
+    private fun rmDo(f: File) {
+        val c = cwd
+        val inside = c != null && (c == f || c.path.startsWith(f.path + File.separator))
+        val ok = if (f.isDirectory) f.deleteRecursively() else f.delete()
+        if (ok) {
+            if (inside) cwd = null
+            add("deleted ${f.name}", dim)
+        } else add("rm: '${f.name}': failed", red)
+    }
+
+    private fun mvCmd(a: List<String>) {
+        if (a.size != 2) { add("mv: usage: mv <source> <dest>", red); return }
+        val src = resolve(a[0])
+        var dst = resolve(a[1])
+        if (src == null || dst == null) { add("mv: outside ~ not allowed", red); return }
+        if (src == root) { add("mv: cannot move home (~)", red); return }
+        if (!src.exists()) { add("mv: '${a[0]}': no such file or folder", red); return }
+        if (dst.isDirectory) dst = File(dst, src.name)
+        if (src.isDirectory && (dst == src || dst.path.startsWith(src.path + File.separator))) {
+            add("mv: cannot move a folder into itself", red); return
+        }
+        if (dst.exists()) { add("mv: '${dst.name}' already exists", red); return }
+        if (src.renameTo(dst)) {
+            val c = cwd
+            if (c != null && (c == src || c.path.startsWith(src.path + File.separator))) cwd = null
+            add("moved ${src.name} -> ${dst.name}", dim)
+        } else add("mv: failed", red)
     }
 
     private fun openApp(arg: String) {

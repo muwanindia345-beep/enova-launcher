@@ -9,7 +9,7 @@ import android.widget.FrameLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 
-// Online apps: simple WebView, koi Enova bridge nahi (website ko phone ke features nahi milte)
+// Online apps: plain WebView with no Enova bridge (websites get no phone features)
 class WebAppActivity : AppCompatActivity() {
     private lateinit var web: WebView
 

@@ -46,8 +46,8 @@ class MainActivity : AppCompatActivity() {
         out = findViewById(R.id.out)
         scroll = findViewById(R.id.scroll)
         input = findViewById(R.id.input)
-        add("Enova Launcher v1.1 ready. 'ls' likho, phir 'open WhatsApp'.", dim)
-        speak("Namaste! Main Enova hoon.")
+        add("Enova Launcher ready. Type 'ls', then 'open WhatsApp'.", dim)
+        speak("Hello! I am Enova.")
         val tap = View.OnClickListener { focusInput() }
         scroll.setOnClickListener(tap)
         out.setOnClickListener(tap)
@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
     @Deprecated("Launcher ignores back")
     override fun onBackPressed() {}
 
-    // Terminal par kahin bhi tap karo to keyboard khul jaye
+    // Tap anywhere on the terminal to open the keyboard
     private fun focusInput() {
         input.requestFocus()
         getSystemService(InputMethodManager::class.java)?.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
@@ -126,7 +126,7 @@ class MainActivity : AppCompatActivity() {
             "ls", "apps" -> {
                 if (apps.isEmpty()) loadApps()
                 apps.forEach { add("✅ " + it.name) }
-                speak("${apps.size} apps mile.")
+                speak("${apps.size} apps found.")
             }
             "open", "launch" -> openApp(arg)
             "exit", "home" -> exitToOtherLauncher()
@@ -135,22 +135,22 @@ class MainActivity : AppCompatActivity() {
             "os" -> openOs(arg)
             "clear" -> out.text = ""
             "date" -> add(DateFormat.getDateTimeInstance().format(Date()))
-            "help" -> add("ls            apps ki list\nopen <app>    app kholo\nos            EnovaOS kholo\nexit          dusre launcher par jao\nswitch        default launcher badlo\nsettings      phone settings\nclear         screen saaf\ndate          samay", dim)
+            "help" -> add("ls            list apps\nopen <app>    open an app\nos            open EnovaOS\nexit          go to another launcher\nswitch        change default launcher\nsettings      phone settings\nclear         clear screen\ndate          show date and time", dim)
             else -> add("$cmd: command not found", red)
         }
     }
 
     private fun openApp(arg: String) {
-        if (arg.isEmpty()) { add("open: app ka naam likho, e.g. open WhatsApp", red); return }
+        if (arg.isEmpty()) { add("open: enter an app name, e.g. open WhatsApp", red); return }
         if (apps.isEmpty()) loadApps()
         val a = apps.firstOrNull { it.name.lowercase() == arg }
             ?: apps.firstOrNull { it.name.lowercase().startsWith(arg) }
             ?: apps.firstOrNull { it.name.lowercase().contains(arg) }
-        if (a == null) { add("open: '$arg' naam ka app nahi mila. ls chalao.", red); speak("Ye app nahi mila."); return }
+        if (a == null) { add("open: no app named '$arg'. Run ls to see apps.", red); speak("App not found."); return }
         val li = packageManager.getLaunchIntentForPackage(a.pkg)
-        if (li == null) { add("open: ${a.name} khul nahi sakta.", red); return }
+        if (li == null) { add("open: cannot open ${a.name}.", red); return }
         add("Opening ${a.name}...", amber)
-        speak("${a.name} khol raha hoon.")
+        speak("Opening ${a.name}.")
         handler.postDelayed({ startActivity(li) }, 700)
     }
 
@@ -158,10 +158,10 @@ class MainActivity : AppCompatActivity() {
         val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         val other = packageManager.queryIntentActivities(i, 0)
             .firstOrNull { it.activityInfo.packageName != packageName }
-        if (other == null) { add("exit: dusra launcher nahi mila. 'switch' try karo.", red); return }
+        if (other == null) { add("exit: no other launcher found. Try 'switch'.", red); return }
         val label = other.loadLabel(packageManager).toString()
         add("Exiting to $label...", amber)
-        speak("Bye bhai!")
+        speak("Bye!")
         val go = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
             .setClassName(other.activityInfo.packageName, other.activityInfo.name)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(action))
         } catch (e: Exception) {
             try { startActivity(Intent(Settings.ACTION_SETTINGS)) }
-            catch (e2: Exception) { add("settings khul nahi payi.", red) }
+            catch (e2: Exception) { add("could not open settings.", red) }
         }
     }
 
@@ -182,7 +182,7 @@ class MainActivity : AppCompatActivity() {
         val name = arg.removePrefix("run").trim()
         val safe = if (Regex("[a-z0-9_-]{1,32}").matches(name)) name else null
         add("Launching EnovaOS...", amber)
-        speak("EnovaOS khol raha hoon.")
+        speak("Opening EnovaOS.")
         val i = Intent(this, OsActivity::class.java)
         if (safe != null) i.putExtra("run", safe)
         handler.postDelayed({ startActivity(i) }, 600)

@@ -72,7 +72,7 @@ class OsActivity : AppCompatActivity() {
         web.loadUrl("https://$host/assets/os/index.html" + if (run != null) "#run-$run" else "")
     }
 
-    // Online apps alag WebView mein khulte hain, unhe bridge nahi milta
+    // Online apps open in a separate WebView and do not get the bridge
     private fun launchWeb(u: String) {
         if (u.startsWith("https://")) {
             startActivity(Intent(this, WebAppActivity::class.java).putExtra("url", u))

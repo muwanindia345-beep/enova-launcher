@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clock</title>
+<style>
+/* Starter app 3: Clock. Seekho: setInterval + Date */
+body{margin:0;padding:14px;background:#020a04;color:#b9f5c8;font-family:monospace;text-align:center}
+#t{font-size:52px;color:#00ff41;margin-top:70px;text-shadow:0 0 14px rgba(0,255,65,.5)}
+#d{color:#4f7a5b;margin-top:10px}
+</style></head><body>
+<div id="t"></div><div id="d"></div>
+<script>
+function tick(){const n=new Date();
+  document.getElementById('t').textContent=n.toLocaleTimeString();
+  document.getElementById('d').textContent=n.toDateString();}
+tick();setInterval(tick,1000);
+</script></body></html>

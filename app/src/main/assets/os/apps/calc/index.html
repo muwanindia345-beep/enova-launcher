@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculator</title>
+<style>
+/* Starter app 2: Calculator. Seekho: CSS grid + buttons + JS events */
+body{margin:0;padding:14px;background:#020a04;color:#b9f5c8;font-family:monospace}
+#d{background:#04120a;border:1px solid #0f2a17;border-radius:10px;padding:14px;text-align:right;font-size:28px;min-height:62px;margin-bottom:12px;word-break:break-all}
+#k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+button{height:54px;border:0;border-radius:10px;background:#0a2314;color:#b9f5c8;font:inherit;font-size:20px}
+.o{color:#ffb454}.e{background:#00ff41;color:#001a07}
+</style></head><body>
+<div id="d">0</div><div id="k"></div>
+<script>
+let s='';const d=document.getElementById('d');
+'7 8 9 / 4 5 6 * 1 2 3 - C 0 = +'.split(' ').forEach(k=>{
+  const b=document.createElement('button');b.textContent=k;
+  if('/*-+'.includes(k))b.className='o';if(k==='=')b.className='e';
+  b.onclick=()=>{
+    if(k==='C')s='';
+    else if(k==='='){try{if(/^[0-9+\-*/. ]+$/.test(s))s=String(Function('return '+s)())}catch(e){s='Error'}}
+    else s+=k;
+    d.textContent=s||'0';
+  };
+  document.getElementById('k').appendChild(b);
+});
+</script></body></html>

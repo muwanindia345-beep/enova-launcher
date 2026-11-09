@@ -132,9 +132,10 @@ class MainActivity : AppCompatActivity() {
             "exit", "home" -> exitToOtherLauncher()
             "switch" -> openSettings(Settings.ACTION_HOME_SETTINGS, "Default home app")
             "settings" -> openSettings(Settings.ACTION_SETTINGS, "Settings")
+            "os" -> openOs(arg)
             "clear" -> out.text = ""
             "date" -> add(DateFormat.getDateTimeInstance().format(Date()))
-            "help" -> add("ls            apps ki list\nopen <app>    app kholo\nexit          dusre launcher par jao\nswitch        default launcher badlo\nsettings      phone settings\nclear         screen saaf\ndate          samay", dim)
+            "help" -> add("ls            apps ki list\nopen <app>    app kholo\nos            EnovaOS kholo\nexit          dusre launcher par jao\nswitch        default launcher badlo\nsettings      phone settings\nclear         screen saaf\ndate          samay", dim)
             else -> add("$cmd: command not found", red)
         }
     }
@@ -175,5 +176,15 @@ class MainActivity : AppCompatActivity() {
             try { startActivity(Intent(Settings.ACTION_SETTINGS)) }
             catch (e2: Exception) { add("settings khul nahi payi.", red) }
         }
+    }
+
+    private fun openOs(arg: String) {
+        val name = arg.removePrefix("run").trim()
+        val safe = if (Regex("[a-z0-9_-]{1,32}").matches(name)) name else null
+        add("Launching EnovaOS...", amber)
+        speak("EnovaOS khol raha hoon.")
+        val i = Intent(this, OsActivity::class.java)
+        if (safe != null) i.putExtra("run", safe)
+        handler.postDelayed({ startActivity(i) }, 600)
     }
 }

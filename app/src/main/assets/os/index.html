@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EnovaOS</title>
+<style>
+:root{--bg:#020a04;--fg:#b9f5c8;--dim:#4f7a5b;--g:#00ff41;--acc:#ffb454;--line:#0f2a17;--surf:#04120a;--key:#0a2314}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:monospace;font-size:14px}
+#os{position:relative;display:flex;flex-direction:column;height:100%;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.3;pointer-events:none}
+.bar{position:relative;display:flex;justify-content:space-between;padding:8px 16px;color:var(--g);font-size:12px;flex:none}
+.home{position:relative;flex:1;overflow-y:auto;padding:6px 16px 16px}
+.home h1{margin:10px 0 2px;text-align:center;font-size:20px;color:var(--g);text-shadow:0 0 12px rgba(0,255,65,.55)}
+.home small{display:block;text-align:center;color:var(--dim);margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px}
+.app{background:none;border:0;color:var(--fg);font:inherit;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0}
+.app .ic{width:58px;height:58px;border-radius:16px;background:var(--surf);border:1px solid var(--g);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 0 10px rgba(0,255,65,.25)}
+.app:active .ic{background:var(--key);transform:scale(.94)}
+.win{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:5}
+.win.on{display:flex}
+.wh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);flex:none}
+.wh b{color:var(--g)}
+.wh button{background:none;border:1px solid var(--line);color:var(--g);font:inherit;padding:4px 10px;border-radius:14px}
+#wb{position:relative;flex:1;min-height:0;overflow-y:auto}
+#wb iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+.pad{padding:14px}
+.t,textarea{width:100%;background:var(--surf);border:1px solid var(--line);border-radius:8px;color:var(--fg);font:inherit;padding:10px;outline:0;margin-bottom:10px}
+textarea{height:34vh;resize:none}
+.btn{background:var(--g);color:#001a07;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:700;margin-right:6px}
+.d{color:var(--dim)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.row button{background:none;border:1px solid #ff6b6b;color:#ff6b6b;border-radius:8px;font:inherit;padding:3px 9px}
+.sw{display:flex;gap:12px;margin:10px 0 18px}
+.sw button{width:44px;height:44px;border-radius:50%;border:2px solid var(--fg)}
+</style>
+</head>
+<body>
+<div id="os">
+ <canvas id="rain"></canvas>
+ <div class="bar"><span id="clk"></span><span id="bat"></span></div>
+ <div class="home"><h1>EnovaOS</h1><small>mini OS · v0.2</small><div class="grid" id="grid"></div></div>
+ <div class="win" id="win"><div class="wh"><button id="cl">← Home</button><b id="wt"></b></div><div id="wb"></div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const E=window.Enova; // sirf Android EnovaOS mein hota hai
+let st={user:[],web:[],accent:'#00ff41'};
+try{const v=localStorage.getItem('eos');if(v)st=Object.assign(st,JSON.parse(v))}catch(e){}
+function save(){try{localStorage.setItem('eos',JSON.stringify(st))}catch(e){}}
+function accent(c){st.accent=c;document.documentElement.style.setProperty('--g',c)}
+accent(st.accent);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// matrix rain
+const cv=$('rain'),cx=cv.getContext('2d');let cols,dr;
+function sz(){cv.width=cv.clientWidth;cv.height=cv.clientHeight;cols=Math.floor(cv.width/14);dr=Array(cols).fill(0).map(()=>Math.random()*-30)}
+sz();addEventListener('resize',sz);const gl='アイウエオカキクケコ0123456789ENOVA';
+setInterval(()=>{cx.fillStyle='rgba(2,10,4,.14)';cx.fillRect(0,0,cv.width,cv.height);cx.fillStyle=st.accent;cx.font='14px monospace';
+ for(let i=0;i<cols;i++){cx.fillText(gl[Math.floor(Math.random()*gl.length)],i*14,dr[i]*14);if(dr[i]*14>cv.height&&Math.random()>.97)dr[i]=0;dr[i]++}},70);
+function bar(){$('clk').textContent=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+ let b=-1;try{b=E?E.battery():-1}catch(e){}$('bat').textContent='EnovaOS'+(b>=0?' · '+b+'%':'')}
+bar();setInterval(bar,1000);
+
+const builtin=[
+ {n:'Notes',i:'📝',src:'apps/notes/index.html'},{n:'Calculator',i:'🧮',src:'apps/calc/index.html'},{n:'Clock',i:'🕒',src:'apps/clock/index.html'},
+ {n:'Builder',i:'🛠️',v:builder},{n:'Online',i:'🌐',v:online},{n:'Settings',i:'⚙️',v:settings}];
+const all=()=>builtin.concat(st.user.map(u=>({n:u.n,i:'🧩',code:u.code})),st.web.map(w=>({n:w.n,i:'🔗',url:w.url})));
+function draw(){const g=$('grid');g.innerHTML='';all().forEach(a=>{const b=document.createElement('button');b.className='app';
+ b.innerHTML='<span class="ic">'+a.i+'</span><span>'+esc(a.n)+'</span>';b.onclick=()=>openApp(a);g.appendChild(b)})}
+let cur=null;
+function openApp(a){
+ if(a.url){if(E)E.openUrl(a.url);else window.open(a.url,'_blank');return}
+ cur=a;$('wt').textContent=a.n;const b=$('wb');b.innerHTML='';$('win').classList.add('on');
+ if(a.src||a.code!==undefined){const f=document.createElement('iframe');
+  if(a.src)f.src=a.src;else{f.setAttribute('sandbox','allow-scripts allow-forms allow-modals');f.srcdoc=a.code}b.appendChild(f)}
+ else a.v(b)}
+function closeWin(){cur=null;$('win').classList.remove('on');$('wb').innerHTML=''}
+window.eosBack=()=>{if(cur){closeWin();return true}return false}; // phone ka back button yahi use karta hai
+$('cl').onclick=closeWin;
+
+// Builder: apna app likho aur chalao
+const TPL='<body style="background:#020a04;color:#b9f5c8;font-family:monospace;padding:16px">\n<h2 style="color:#00ff41">Hello Enova</h2>\n<button onclick="Enova.vibrate(80)">Vibrate</button>\n<button onclick="Enova.toast(\'Namaste!\')">Toast</button>\n</body>';
+let draft={n:'',code:TPL};
+function builder(el){
+ el.innerHTML='<div class="pad"><input class="t" id="bn" placeholder="app ka naam" autocomplete="off"><textarea id="bc" spellcheck="false"></textarea><button class="btn" id="br">Run</button><button class="btn" id="bs">Save</button><p id="bm" class="d"></p></div>';
+ $('bn').value=draft.n;$('bc').value=draft.code;
+ $('br').onclick=()=>{draft={n:$('bn').value,code:$('bc').value};openApp({n:'Preview',code:draft.code})};
+ $('bs').onclick=()=>{const n=$('bn').value.trim().slice(0,14);if(!n){$('bm').textContent='naam likho';return}
+  draft={n:n,code:$('bc').value};const i=st.user.findIndex(u=>u.n===n);
+  if(i>=0)st.user[i].code=draft.code;else st.user.push({n:n,code:draft.code});
+  save();draw();$('bm').textContent=n+' save ho gaya ✅ (home grid mein dekho)'}}
+function online(el){
+ el.innerHTML='<div class="pad"><p class="d">Website ko app ki tarah jodo. Online apps ko phone ke features (bridge) nahi milte.</p><input class="t" id="on" placeholder="naam" autocomplete="off"><input class="t" id="ou" placeholder="https://example.com" autocomplete="off" autocapitalize="off"><button class="btn" id="oa">Add</button><p id="om" class="d"></p></div>';
+ $('oa').onclick=()=>{const n=$('on').value.trim().slice(0,14),u=$('ou').value.trim();
+  if(!n||!/^https:\/\/[^\s]+$/.test(u)){$('om').textContent='naam aur https:// wala link daalo';return}
+  st.web.push({n:n,url:u});save();draw();$('om').textContent=n+' add ho gaya ✅'}}
+function settings(el){
+ el.innerHTML='<div class="pad"><b>Accent color</b><div class="sw"></div><b>Apps manage</b><div id="ml"></div>'+
+ '<p><b>Backup</b></p><textarea id="bk" spellcheck="false"></textarea><button class="btn" id="ex">Export</button><button class="btn" id="im">Import</button><p id="sm" class="d"></p>'+
+ '<p class="d" style="margin-top:24px">EnovaOS v0.2 · WebView mini OS</p></div>';
+ [['#00ff41','green'],['#ffb454','amber'],['#33d6ff','cyan']].forEach(c=>{const b=document.createElement('button');b.style.background=c[0];b.setAttribute('aria-label',c[1]);
+  b.onclick=()=>{accent(c[0]);save()};el.querySelector('.sw').appendChild(b)});
+ const ml=$('ml');const items=st.user.map((u,i)=>['user',i,u.n]).concat(st.web.map((w,i)=>['web',i,w.n]));
+ if(!items.length)ml.innerHTML='<p class="d">Abhi koi apna app nahi.</p>';
+ items.forEach(it=>{const r=document.createElement('div');r.className='row';r.innerHTML='<span>'+esc(it[2])+'</span>';
+  const d=document.createElement('button');d.textContent='delete';d.onclick=()=>{st[it[0]].splice(it[1],1);save();draw();settings(el)};r.appendChild(d);ml.appendChild(r)});
+ $('ex').onclick=()=>{$('bk').value=JSON.stringify({user:st.user,web:st.web});$('sm').textContent='Is text ko copy karke safe jagah rakh lo.'};
+ $('im').onclick=()=>{try{const j=JSON.parse($('bk').value);if(Array.isArray(j.user))st.user=j.user;if(Array.isArray(j.web))st.web=j.web;save();draw();settings(el);}catch(e){$('sm').textContent='Import fail: text sahi nahi hai'}}}
+draw();
+const m=location.hash.match(/^#run-([a-z0-9_-]+)$/);
+if(m){const a=all().find(x=>x.n.toLowerCase()===m[1]);if(a)openApp(a)}
+</script>
+</body>
+</html>

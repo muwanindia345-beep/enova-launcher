@@ -156,9 +156,10 @@ class MainActivity : AppCompatActivity() {
             "cat" -> catCmd(args)
             "touch" -> touchCmd(args)
             "rm" -> rmCmd(args)
+            "nano" -> nanoCmd(args)
             "clear" -> out.text = ""
             "date" -> add(DateFormat.getDateTimeInstance().format(Date()))
-            "help" -> add("ls            list apps\nopen <app>    open an app\nos            open EnovaOS\nexit          go to another launcher\nswitch        change default launcher\nsettings      phone settings\nmkdir <name>  create folder\ncd <folder>   enter folder (cd ~ = home)\ncwd           show current folder\ndir           list files in folder\ncp <src> <dst> copy file/folder\nmv <src> <dst>  move or rename\ncat <file>    show file text\ntouch <file>  create empty file\nrm <file>     delete file\nrm -rf <dir>  delete folder\nclear         clear screen\ndate          show date and time", dim)
+            "help" -> add("ls            list apps\nopen <app>    open an app\nos            open EnovaOS\nexit          go to another launcher\nswitch        change default launcher\nsettings      phone settings\nmkdir <name>  create folder\ncd <folder>   enter folder (cd ~ = home)\ncwd           show current folder\ndir           list files in folder\ncp <src> <dst> copy file/folder\nmv <src> <dst>  move or rename\ncat <file>    show file text\ntouch <file>  create empty file\nrm <file>     delete file\nrm -rf <dir>  delete folder\nnano <file>   edit file\nclear         clear screen\ndate          show date and time", dim)
             else -> add("$cmd: command not found", red)
         }
     }
@@ -326,6 +327,17 @@ class MainActivity : AppCompatActivity() {
             if (c != null && (c == src || c.path.startsWith(src.path + File.separator))) cwd = null
             add("moved ${src.name} -> ${dst.name}", dim)
         } else add("mv: failed", red)
+    }
+
+    private fun nanoCmd(a: List<String>) {
+        if (a.isEmpty()) { add("nano: usage: nano <file>", red); return }
+        val f = resolve(a[0])
+        when {
+            f == null -> add("nano: '${a[0]}': outside ~ not allowed", red)
+            f.isDirectory -> add("nano: '${a[0]}': is a folder", red)
+            f.parentFile?.isDirectory != true -> add("nano: '${a[0]}': folder does not exist", red)
+            else -> startActivity(Intent(this, NanoActivity::class.java).putExtra("path", f.path))
+        }
     }
 
     private fun openApp(arg: String) {

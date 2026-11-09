@@ -17,6 +17,7 @@ import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import java.io.File
 import java.text.DateFormat
 import java.util.Date
 
@@ -37,6 +38,11 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var typer: Runnable? = null
     private var apps = listOf<App>()
+
+    // Real folders/files live here: app's private storage (no permission needed)
+    private val root: File by lazy { File(filesDir, "home").also { it.mkdirs() }.canonicalFile }
+    private var cwd: File? = null            // null = home (~)
+    private fun here(): File = cwd ?: root
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,11 +123,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun run(raw: String) {
         val v = raw.trim()
-        add("enova@home:~$ $v", green)
+        add("enova@home:${pathLabel()}$ $v", green)
         if (v.isEmpty()) return
         val parts = v.split(Regex("\\s+"), 2)
         val cmd = parts[0].lowercase()
-        val arg = parts.getOrNull(1)?.trim()?.lowercase() ?: ""
+        val rest = parts.getOrNull(1)?.trim() ?: ""         // original case (for file names)
+        val arg = rest.lowercase()
+        val args = if (rest.isEmpty()) emptyList() else rest.split(Regex("\\s+"))
         when (cmd) {
             "ls", "apps" -> {
                 if (apps.isEmpty()) loadApps()
@@ -133,10 +141,85 @@ class MainActivity : AppCompatActivity() {
             "switch" -> openSettings(Settings.ACTION_HOME_SETTINGS, "Default home app")
             "settings" -> openSettings(Settings.ACTION_SETTINGS, "Settings")
             "os" -> openOs(arg)
+            "mkdir" -> mkdirCmd(args)
+            "cd" -> cdCmd(args.firstOrNull() ?: "~")
+            "cwd", "pwd" -> add(pathLabel())
+            "dir", "ll" -> dirCmd()
+            "cp" -> cpCmd(args)
             "clear" -> out.text = ""
             "date" -> add(DateFormat.getDateTimeInstance().format(Date()))
-            "help" -> add("ls            list apps\nopen <app>    open an app\nos            open EnovaOS\nexit          go to another launcher\nswitch        change default launcher\nsettings      phone settings\nclear         clear screen\ndate          show date and time", dim)
+            "help" -> add("ls            list apps\nopen <app>    open an app\nos            open EnovaOS\nexit          go to another launcher\nswitch        change default launcher\nsettings      phone settings\nmkdir <name>  create folder\ncd <folder>   enter folder (cd ~ = home)\ncwd           show current folder\ndir           list files in folder\ncp <src> <dst> copy file/folder\nclear         clear screen\ndate          show date and time", dim)
             else -> add("$cmd: command not found", red)
+        }
+    }
+
+    // ---------- file commands ----------
+
+    private fun pathLabel(): String {
+        val rel = here().relativeTo(root).path
+        return if (rel.isEmpty()) "~" else "~/$rel"
+    }
+
+    // ~, ~/x, /x, x, .. -> real File, but never outside root
+    private fun resolve(p: String): File? {
+        val base = when {
+            p == "~" -> root
+            p.startsWith("~/") -> File(root, p.substring(2))
+            p.startsWith("/") -> File(root, p.substring(1))
+            else -> File(here(), p)
+        }
+        val c = base.canonicalFile
+        return if (c == root || c.path.startsWith(root.path + File.separator)) c else null
+    }
+
+    private fun mkdirCmd(names: List<String>) {
+        if (names.isEmpty()) { add("mkdir: folder name missing, e.g. mkdir notes", red); return }
+        for (n in names) {
+            val f = resolve(n)
+            when {
+                f == null -> add("mkdir: '$n': outside ~ not allowed", red)
+                f.exists() -> add("mkdir: '$n': already exists", red)
+                f.mkdirs() -> add("created $n", dim)
+                else -> add("mkdir: '$n': failed", red)
+            }
+        }
+    }
+
+    private fun cdCmd(arg: String) {
+        if (arg == "~") { cwd = null; return }
+        val f = resolve(arg)
+        when {
+            f == null -> add("cd: '$arg': outside ~ not allowed", red)
+            !f.exists() -> add("cd: '$arg': no such folder", red)
+            !f.isDirectory -> add("cd: '$arg': not a folder", red)
+            else -> cwd = if (f == root) null else f
+        }
+    }
+
+    private fun dirCmd() {
+        val list = here().listFiles()
+            ?.sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
+            ?: emptyList()
+        if (list.isEmpty()) { add("(empty)", dim); return }
+        list.forEach { add(if (it.isDirectory) "📁 ${it.name}" else "📄 ${it.name}") }
+    }
+
+    private fun cpCmd(a: List<String>) {
+        if (a.size != 2) { add("cp: usage: cp <source> <dest>", red); return }
+        val src = resolve(a[0])
+        var dst = resolve(a[1])
+        if (src == null || dst == null) { add("cp: outside ~ not allowed", red); return }
+        if (!src.exists()) { add("cp: '${a[0]}': no such file or folder", red); return }
+        if (dst.isDirectory) dst = File(dst, src.name)
+        if (src.isDirectory && (dst == src || dst.path.startsWith(src.path + File.separator))) {
+            add("cp: cannot copy a folder into itself", red); return
+        }
+        if (dst.exists()) { add("cp: '${dst.name}' already exists", red); return }
+        try {
+            val ok = if (src.isDirectory) src.copyRecursively(dst) else { src.copyTo(dst); true }
+            if (ok) add("copied ${src.name} -> ${dst.name}", dim) else add("cp: failed", red)
+        } catch (e: Exception) {
+            add("cp: failed (${e.message})", red)
         }
     }
 

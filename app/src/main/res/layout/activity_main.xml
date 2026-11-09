@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:paddingTop="10dp"
-            android:text="Enova Launcher v1.6"
+            android:text="Enova Launcher v1.7"
             android:textColor="#00FF41"
             android:textSize="18sp"
             android:textStyle="bold"

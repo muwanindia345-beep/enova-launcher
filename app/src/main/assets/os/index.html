@@ -22,7 +22,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.3;pointer-event
 .win.on{display:flex}
 .wh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);flex:none}
 .wh b{color:var(--g)}
-.wh button{background:none;border:1px solid var(--line);color:var(--g);font:inherit;padding:4px 10px;border-radius:14px}
+.wh button{display:inline-flex;align-items:center;gap:6px;min-height:40px;background:var(--surf);border:1px solid var(--g);color:var(--g);font:inherit;padding:0 14px 0 10px;border-radius:20px}
+.wh button:active{background:var(--key)}
 #wb{position:relative;flex:1;min-height:0;overflow-y:auto}
 #wb iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
 .pad{padding:14px}
@@ -41,7 +42,7 @@ textarea{height:34vh;resize:none}
  <canvas id="rain"></canvas>
  <div class="bar"><span id="clk"></span><span id="bat"></span></div>
  <div class="home"><h1>EnovaOS</h1><small>mini OS · v0.2</small><div class="grid" id="grid"></div></div>
- <div class="win" id="win"><div class="wh"><button id="cl">← Home</button><b id="wt"></b></div><div id="wb"></div></div>
+ <div class="win" id="win"><div class="wh"><button id="cl" aria-label="Back to home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Home</button><b id="wt"></b></div><div id="wb"></div></div>
 </div>
 <script>
 const $=id=>document.getElementById(id);

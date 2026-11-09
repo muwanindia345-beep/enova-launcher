@@ -142,7 +142,9 @@ class MainActivity : AppCompatActivity() {
                 apps.forEach { add("✅ " + it.name) }
                 speak("${apps.size} apps found.")
             }
-            "open", "launch" -> openApp(arg)
+            "open" -> openApp(arg)
+            "launch" -> launchCmd(args, arg)
+            "run" -> runCmd(args)
             "exit", "home" -> exitToOtherLauncher()
             "switch" -> openSettings(Settings.ACTION_HOME_SETTINGS, "Default home app")
             "settings" -> openSettings(Settings.ACTION_SETTINGS, "Settings")
@@ -159,7 +161,7 @@ class MainActivity : AppCompatActivity() {
             "nano" -> nanoCmd(args)
             "clear" -> out.text = ""
             "date" -> add(DateFormat.getDateTimeInstance().format(Date()))
-            "help" -> add("ls            list apps\nopen <app>    open an app\nos            open EnovaOS\nexit          go to another launcher\nswitch        change default launcher\nsettings      phone settings\nmkdir <name>  create folder\ncd <folder>   enter folder (cd ~ = home)\ncwd           show current folder\ndir           list files in folder\ncp <src> <dst> copy file/folder\nmv <src> <dst>  move or rename\ncat <file>    show file text\ntouch <file>  create empty file\nrm <file>     delete file\nrm -rf <dir>  delete folder\nnano <file>   edit file\nclear         clear screen\ndate          show date and time", dim)
+            "help" -> add("ls            list apps\nopen <app>    open an app\nos            open EnovaOS\nexit          go to another launcher\nswitch        change default launcher\nsettings      phone settings\nmkdir <name>  create folder\ncd <folder>   enter folder (cd ~ = home)\ncwd           show current folder\ndir           list files in folder\ncp <src> <dst> copy file/folder\nmv <src> <dst>  move or rename\ncat <file>    show file text\ntouch <file>  create empty file\nrm <file>     delete file\nrm -rf <dir>  delete folder\nnano <file>   edit file\nrun <file>    preview html/css/js\nlaunch <file> launch file as app\nclear         clear screen\ndate          show date and time", dim)
             else -> add("$cmd: command not found", red)
         }
     }
@@ -336,6 +338,50 @@ class MainActivity : AppCompatActivity() {
             f == null -> add("nano: '${a[0]}': outside ~ not allowed", red)
             f.isDirectory -> add("nano: '${a[0]}': is a folder", red)
             f.parentFile?.isDirectory != true -> add("nano: '${a[0]}': folder does not exist", red)
+            else -> startActivity(Intent(this, NanoActivity::class.java).putExtra("path", f.path))
+        }
+    }
+
+    // ---------- run / launch (HTML, CSS, JS) ----------
+
+    private fun webTarget(f: File): File? {
+        if (f.isDirectory) return File(f, "index.html").takeIf { it.isFile }
+        val e = f.extension.lowercase()
+        return if (f.isFile && (e == "html" || e == "htm")) f else null
+    }
+
+    private fun startPreview(f: File, app: Boolean) {
+        val rel = f.relativeTo(root).path.replace(File.separatorChar, '/')
+        add((if (app) "Launching " else "Preview: ") + "https://localhost/$rel", amber)
+        speak(if (app) "Launching ${f.name}." else "Running ${f.name}.")
+        val i = Intent(this, PreviewActivity::class.java)
+            .putExtra("path", f.path)
+            .putExtra("app", app)
+        handler.postDelayed({ startActivity(i) }, 500)
+    }
+
+    private fun runCmd(a: List<String>) {
+        if (a.isEmpty()) { add("run: usage: run <file.html>  (or a folder with index.html)", red); return }
+        val f = resolve(a[0])
+        when {
+            f == null -> add("run: '${a[0]}': outside ~ not allowed", red)
+            !f.exists() -> add("run: '${a[0]}': no such file", red)
+            else -> {
+                val t = webTarget(f)
+                if (t == null) add("run: '${a[0]}': only .html/.htm (or a folder with index.html) can run", red)
+                else startPreview(t, false)
+            }
+        }
+    }
+
+    private fun launchCmd(a: List<String>, arg: String) {
+        if (a.isEmpty()) { add("launch: usage: launch <file>  (or launch <app name>)", red); return }
+        val f = resolve(a[0])
+        if (f == null || !f.exists()) { openApp(arg); return }   // old behaviour: launch WhatsApp
+        val t = webTarget(f)
+        when {
+            t != null -> startPreview(t, true)
+            f.isDirectory -> openApp(arg)
             else -> startActivity(Intent(this, NanoActivity::class.java).putExtra("path", f.path))
         }
     }
